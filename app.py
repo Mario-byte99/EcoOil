@@ -90,8 +90,6 @@ if st.session_state.usuario:
         menu = st.sidebar.radio("Navegación", [
             "🏠 Inicio",
             "🏢 Datos de la Empresa",
-            "✏️ Mis Datos",
-            "📦 Solicitar Recolección",
             "⚙️ Administración",
             "🚪 Cerrar Sesión"
         ])
@@ -191,10 +189,10 @@ elif menu == "🏢 Datos de la Empresa":
     📧 **Correo:** contacto@eco-oil.mx
     
     ### 👥 Nuestro Equipo
-    - **Mario Cháquen** — Coordinador de Logística
+    - **Mario Chalqueño** — Coordinador de Logística
     - **José de Jesús Palencia** — Jefe de Operaciones
     - **Aracely Sánchez** — Atención a Clientes
-    - **Tania Aguilar** — Administración
+    - **Cristian** — Administración
     
     ### 📋 ¿Qué hacemos?
     Recolectamos aceite de cocina y lubricante usado de forma segura,
@@ -305,7 +303,7 @@ elif menu == "⚙️ Administración":
         st.error("❌ No tienes permiso para acceder a esta página")
     else:
         st.title("⚙️ Panel de Administración")
-        st.success(f"👋 Bienvenido Administrador — {correo_usuario}")
+        st.success(f"👋 Bienvenido Administrador — {nombre_usuario}")
         
         tab1, tab2 = st.tabs(["📋 Solicitudes de Recolección", "👥 Usuarios Registrados"])
         

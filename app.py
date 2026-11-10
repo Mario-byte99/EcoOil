@@ -10,7 +10,7 @@ st.set_page_config(
 # Código de verificación de Google
 st.html("""
 <head>
-<meta name="google-site-verification" content="<meta name="google-site-verification" content="EF6SeijiuTcSklEjDiCRLOm4K4ljPgdo4Oi03lx9aEU" /> 
+<meta name="google-site-verification" content="EF6SeijiuTcSklEjDiCRLOm4K4ljPgdo4Oi03lx9aEU" /> 
 </head>
 """)
 

@@ -1,4 +1,18 @@
 import streamlit as st
+
+# Meta etiqueta para Google Search Console
+st.set_page_config(
+    page_title="Eco-Oil — Recolección de Aceite",
+    page_icon="🌱",
+    menu_items=None
+)
+
+# Código de verificación de Google
+st.markdown("""
+<meta name="google-site-verification" content="<meta name="google-site-verification" content="EF6SeijiuTcSklEjDiCRLOm4K4ljPgdo4Oi03lx9aEU" />" />
+""", unsafe_allow_html=True)
+
+import streamlit as st
 from supabase import create_client, Client
 
 # --------------------------

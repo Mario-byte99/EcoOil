@@ -297,7 +297,7 @@ elif menu == "⚙️ Administración":
         st.error("❌ No tienes permiso para acceder a esta página")
     else:
         st.title("⚙️ Panel de Administración")
-        st.success(f"👋 Bienvenido Administrador — {nombre_usuario}")
+        st.success(f"👋 Bienvenido Administrador — {st.session_state.usuario.get('nombre_usuario','Administradoor')}")
         
         tab1, tab2 = st.tabs(["📋 Solicitudes de Recolección", "👥 Usuarios Registrados"])
         

@@ -32,12 +32,17 @@ def registrar_usuario(nombre_usuario, correo, contrasena):
         return False
 
 def iniciar_sesion_usuario(correo, contrasena):
-    respuesta = supabase.table("usuarios").select("*").eq("correo", correo).execute()
-    if  respuesta.data:
-        usuario = respuesta.data[0]
-    if usuario["contrasena"] == contrasena:
-        return usuario
-    return None
+    try:
+        respuesta = supabase.table("usuarios").select("*").eq("correo", correo).execute()
+        if  not respuesta.data:
+            return None, "Correo no encontrado"
+            usuario = respuesta.data(0)
+        if usuario.get("contrasena") == contrasena:
+            return usuario, "Bienvenido, " + usuario["Nombre_usuario"] + "!"
+        else: 
+            return None, "Contraseña incorrecta"
+    except Exception as e:
+        return None, f"Error: {str(e)}"
 
 def actualizar_datos_usuario(usuario_id, nombre_taller, ubicacion, litros, tambos):
     supabase.table("usuarios").update({

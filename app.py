@@ -33,10 +33,10 @@ def registrar_usuario(nombre_usuario, correo, contrasena):
 
 def iniciar_sesion_usuario(correo, contrasena):
     respuesta = supabase.table("usuarios").select("*").eq("correo", correo).execute()
-    if respuesta.data:
+    if  respuesta.data:
         usuario = respuesta.data[0]
-        if usuario["contrasena"] == contrasena:
-            return usuario
+    if usuario["contrasena"] == contrasena:
+        return usuario
     return None
 
 def actualizar_datos_usuario(usuario_id, nombre_taller, ubicacion, litros, tambos):

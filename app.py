@@ -214,12 +214,6 @@ elif menu == "✏️ Mis Datos":
         nuevo_correo = st.text_input("📧 Correo electrónico", value=correo_actual, disabled=True)
         nueva_contrasena = st.text_input("🔒 Nueva contraseña (dejar vacío para no cambiar)", type="password")
         
-        st.subheader("🏢 Datos de Recolección")
-        nombre_taller = st.text_input("Nombre del Taller / Negocio")
-        ubicacion = st.text_area("📍 Ubicación completa")
-        litros = st.number_input("🛢️ Litros de aceite a recolectar", min_value=0.0, step=1.0)
-        tambos = st.number_input("📦 Cantidad de tambos", min_value=0, step=1)
-        
         if st.button("Guardar Cambios"):
             actualizar = {"nombre_usuario": nuevo_nombre}
             if nueva_contrasena:

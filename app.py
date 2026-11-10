@@ -1,17 +1,17 @@
 import streamlit as st
 from supabase import create_client, Client
 
-# ==================== CONFIGURACIÓN ====================
+# --------------------------
+# 🔑 CONFIGURACIÓN DE SUPABASE
+# --------------------------
 SUPABASE_URL = st.secrets.get("SUPABASE_URL", "")
 SUPABASE_KEY = st.secrets.get("SUPABASE_KEY", "")
 
-def init_supabase():
-    if SUPABASE_URL and SUPABASE_KEY:
-        return create_client(SUPABASE_URL, SUPABASE_KEY)
-    return None
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-supabase = init_supabase()
-
+# --------------------------
+# 👤 ADMINISTRADORES
+# --------------------------
 ADMIN_CORREOS = {
     "chalquenomario18@gmail.com": "3312",
     "josedejesuspalenciaramirez2@gmail.com": "2006",
@@ -19,260 +19,320 @@ ADMIN_CORREOS = {
     "tatisaguilarmtz@gmail.com": "4567"
 }
 
-# ==================== FUNCIONES ====================
-def registrar_usuario(nombre_usuario, correo, contrasena):
+# --------------------------
+# ✅ INICIALIZAR VARIABLES DE SESIÓN
+# --------------------------
+if "usuario" not in st.session_state:
+    st.session_state.usuario = None
+
+if "pagina_actual" not in st.session_state:
+    st.session_state.pagina_actual = "inicio"
+
+# --------------------------
+# 🔐 FUNCIONES DE AUTENTICACIÓN
+# --------------------------
+def registrar_usuario(correo, contrasena, nombre_usuario=""):
     try:
-        supabase.table("usuarios").insert({
-            "nombre_usuario": nombre_usuario,
+        respuesta = supabase.table("usuarios").select("*").eq("correo", correo).execute()
+        if respuesta.data:
+            return False, "⚠️ Este correo ya está registrado"
+        
+        datos = {
             "correo": correo,
-            "contrasena": contrasena
-        }).execute()
-        return True
-    except:
-        return False
+            "contrasena": contrasena,
+            "nombre_usuario": nombre_usuario
+        }
+        supabase.table("usuarios").insert(datos).execute()
+        return True, "✅ Registro exitoso. Ahora puedes iniciar sesión"
+    except Exception as e:
+        return False, f"❌ Error al registrar: {str(e)}"
+
 
 def iniciar_sesion_usuario(correo, contrasena):
     try:
         respuesta = supabase.table("usuarios").select("*").eq("correo", correo).execute()
-        if  not respuesta.data:
-            return None, "Correo no encontrado"
-            usuario = respuesta.data(0)
+        
+        if not respuesta.data:
+            return None, "❌ Correo no encontrado"
+        
+        usuario = respuesta.data[0]
+        
         if usuario.get("contrasena") == contrasena:
-            return usuario, "Bienvenido, " + usuario["Nombre_usuario"] + "!"
-        else: 
-            return None, "Contraseña incorrecta"
+            return usuario, f"✅ Bienvenido, {usuario['nombre_usuario']}!"
+        else:
+            return None, "❌ Contraseña incorrecta"
+            
     except Exception as e:
-        return None, f"Error: {str(e)}"
+        return None, f"❌ Error: {str(e)}"
 
-def actualizar_datos_usuario(usuario_id, nombre_taller, ubicacion, litros, tambos):
-    supabase.table("usuarios").update({
-        "nombre_taller": nombre_taller,
-        "ubicacion": ubicacion,
-        "litros_aceite": litros,
-        "cantidad_tambos": tambos,
-        "datos_completos": True
-    }).eq("id", usuario_id).execute()
 
-def obtener_datos_usuario(usuario_id):
-    respuesta = supabase.table("usuarios").select("*").eq("id", usuario_id).execute()
-    return respuesta.data[0] if respuesta.data else None
+def actualizar_datos_usuario(correo_actual, nuevos_datos):
+    try:
+        supabase.table("usuarios").update(nuevos_datos).eq("correo", correo_actual).execute()
+        return True, "✅ Datos actualizados correctamente"
+    except Exception as e:
+        return False, f"❌ Error: {str(e)}"
 
-def obtener_todos_usuarios():
-    respuesta = supabase.table("usuarios").select("*").execute()
-    return respuesta.data if respuesta.data else []
 
-# ==================== INTERFAZ WEB ====================
-st.set_page_config(page_title="Eco-Oil", page_icon="🌿", layout="wide")
+def guardar_solicitud_recoleccion(datos):
+    try:
+        supabase.table("historial_recoleccion").insert(datos).execute()
+        return True, "✅ Solicitud enviada correctamente"
+    except Exception as e:
+        return False, f"❌ Error al guardar: {str(e)}"
 
-# --- Inicializar sesión ---
-if "usuario" not in st.session_state:
-    st.session_state.usuario = None
-if "pagina_actual" not in st.session_state:
-    st.session_state.pagina_actual = "inicio"
-
-# --- Barra lateral personalizada según sesión ---
+# --------------------------
+# 📱 BARRA LATERAL Y MENÚ
+# --------------------------
 if st.session_state.usuario:
-    if st.session_state.usuario["correo"] in ADMIN_CORREOS:
+    correo_usuario = st.session_state.usuario.get("correo", "")
+    if correo_usuario in ADMIN_CORREOS:
         menu = st.sidebar.radio("Navegación", [
             "🏠 Inicio",
             "🏢 Datos de la Empresa",
             "✏️ Mis Datos",
-            "👥 Administración"
+            "📦 Solicitar Recolección",
+            "⚙️ Administración",
+            "🚪 Cerrar Sesión"
         ])
     else:
         menu = st.sidebar.radio("Navegación", [
             "🏠 Inicio",
             "🏢 Datos de la Empresa",
-            "✏️ Mis Datos"
+            "✏️ Mis Datos",
+            "📦 Mis Solicitudes",
+            "📦 Nueva Solicitud",
+            "🚪 Cerrar Sesión"
         ])
 else:
     menu = st.sidebar.radio("Navegación", [
         "🏠 Inicio",
-        "🔐 Iniciar Sesión",
-        "📝 Registrarse"
+        "🔑 Iniciar Sesión",
+        "📝 Registrarse",
+        "🏢 Datos de la Empresa"
     ])
 
-st.sidebar.write("---")
-st.sidebar.markdown("<h3 style='text-align: center; color: #2d7d32;'>🌿 Eco-Oil</h3>", unsafe_allow_html=True)
+# --------------------------
+# 📄 PÁGINAS DE LA APLICACIÓN
+# --------------------------
 
-# ==================== PÁGINAS ====================
-
-# --- 🏠 INICIO ---
+# 🏠 INICIO
 if menu == "🏠 Inicio":
-    st.markdown("<h1 style='text-align: center; color: #2d7d32;'>🌿 Eco-Oil</h1>", unsafe_allow_html=True)
-    st.markdown("<h3 style='text-align: center;'>Sistema de Recolección de Aceite Vegetal</h3>", unsafe_allow_html=True)
-    st.write("---")
+    st.title("🌱 Eco-Oil — Recolección de Aceite")
+    st.subheader("Cuida el planeta, recicla tu aceite usado")
     
-    col1, col2 = st.columns(2)
-    with col1:
-        st.subheader("♻️ Bienvenido")
-        st.write("Eco-Oil es un proyecto dedicado a la recolección y reciclaje de aceite vegetal usado. ¡Cuida el planeta con nosotros!")
-        st.write("🔹 Registra los datos de tu taller")
-        st.write("🔹 Indica la cantidad de aceite disponible")
-        st.write("🔹 Nosotros vamos por ti")
-        st.write("📍 San Luis Potosí, S.L.P.")
+    st.markdown("""
+    ### 🟢 Bienvenido a Eco-Oil
     
-    with col2:
-        st.image("https://images.unsplash.com/photo-1532996122724-e4b4938ff3e5?w=500", caption="Protejamos nuestro planeta 🌍")
+    Somos una empresa comprometida con el medio ambiente. 
+    Recolectamos tu aceite usado y le damos un tratamiento adecuado.
     
-    if not st.session_state.usuario:
-        st.info("👈 Inicia sesión o regístrate en el menú lateral")
+    ✅ Contamina menos
+    ✅ Cuida el agua y el suelo
+    ✅ Recibe un servicio gratuito
+    
+    > 🔑 Inicia sesión o regístrate para solicitar tu recolección
+    """)
 
-# --- 🔐 INICIAR SESIÓN ---
-elif menu == "🔐 Iniciar Sesión":
-    st.markdown("<h2 style='text-align: center;'>🔐 Iniciar Sesión</h2>", unsafe_allow_html=True)
-    st.write("---")
+# 🔑 INICIAR SESIÓN
+elif menu == "🔑 Iniciar Sesión":
+    st.title("🔑 Iniciar Sesión")
     
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
-        st.image("https://images.unsplash.com/photo-1497435307147-9e53b114c9ee?w=300", use_container_width=True)
-        correo = st.text_input("Correo electrónico")
-        contrasena = st.text_input("Contraseña", type="password")
-        
-        if st.button("🔑 Ingresar", use_container_width=True):
-            usuario = iniciar_sesion_usuario(correo, contrasena)
+    correo = st.text_input("📧 Correo electrónico")
+    contrasena = st.text_input("🔒 Contraseña", type="password")
+    
+    if st.button("Ingresar"):
+        if correo and contrasena:
+            usuario, mensaje = iniciar_sesion_usuario(correo, contrasena)
             if usuario:
                 st.session_state.usuario = usuario
+                st.success(mensaje)
                 st.rerun()
             else:
-                st.error("❌ Correo o contraseña incorrectos")
+                st.error(mensaje)
+        else:
+            st.warning("⚠️ Completa todos los campos")
 
-# --- 📝 REGISTRARSE ---
+# 📝 REGISTRARSE
 elif menu == "📝 Registrarse":
-    st.markdown("<h2 style='text-align: center;'>📝 Crear Cuenta</h2>", unsafe_allow_html=True)
-    st.write("---")
+    st.title("📝 Crear Cuenta")
     
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
-        nombre_usuario = st.text_input("Nombre de usuario")
-        correo = st.text_input("Correo electrónico")
-        contrasena = st.text_input("Contraseña", type="password")
-        confirmar = st.text_input("Confirmar contraseña", type="password")
-        
-        if st.button("✅ Registrarse", use_container_width=True):
-            if contrasena == confirmar and nombre_usuario and correo:
-                if registrar_usuario(nombre_usuario, correo, contrasena):
-                    st.success("✅ ¡Cuenta creada! Ahora inicia sesión")
-                else:
-                    st.error("❌ Este correo o usuario ya está registrado")
+    nombre = st.text_input("👤 Nombre completo")
+    correo = st.text_input("📧 Correo electrónico")
+    contrasena = st.text_input("🔒 Contraseña", type="password")
+    confirmar = st.text_input("🔒 Confirmar contraseña", type="password")
+    
+    if st.button("Registrarse"):
+        if nombre and correo and contrasena and confirmar:
+            if contrasena != confirmar:
+                st.error("❌ Las contraseñas no coinciden")
             else:
-                st.warning("⚠️ Verifica los datos")
+                ok, mensaje = registrar_usuario(correo, contrasena, nombre)
+                if ok:
+                    st.success(mensaje)
+                    st.info("Ahora ve a 'Iniciar Sesión'")
+                else:
+                    st.error(mensaje)
+        else:
+            st.warning("⚠️ Completa todos los campos")
 
-# --- ✏️ MIS DATOS (Usuario completa/modifica su información) ---
+# 🏢 DATOS DE LA EMPRESA
+elif menu == "🏢 Datos de la Empresa":
+    st.title("🏢 Eco-Oil — Recolección de Aceite")
+    
+    st.markdown("""
+    ### 🌍 Quiénes Somos
+    
+    **Eco-Oil** es una empresa dedicada a la recolección y tratamiento de aceites usados.
+    Contribuimos al cuidado del medio ambiente evitando que aceites contaminantes lleguen a nuestros ríos y suelos.
+    
+    📍 **Ubicación:** San Luis Potosí, S.L.P.
+    📞 **Teléfono:** (444) 123-4567
+    📧 **Correo:** contacto@eco-oil.mx
+    
+    ### 👥 Nuestro Equipo
+    - **Mario Cháquen** — Coordinador de Logística
+    - **José de Jesús Palencia** — Jefe de Operaciones
+    - **Aracely Sánchez** — Atención a Clientes
+    - **Tania Aguilar** — Administración
+    
+    ### 📋 ¿Qué hacemos?
+    Recolectamos aceite de cocina y lubricante usado de forma segura,
+    lo procesamos y le damos un destino ecológico.
+    """)
+
+# ✏️ MIS DATOS
 elif menu == "✏️ Mis Datos":
-    usuario = st.session_state.usuario
-    if not usuario:
+    if not st.session_state.usuario:
         st.warning("⚠️ Inicia sesión primero")
     else:
-        st.markdown("<h2 style='text-align: center;'>✏️ Mis Datos</h2>", unsafe_allow_html=True)
-        st.write("---")
+        st.title("✏️ Mis Datos")
         
-        datos_actuales = obtener_datos_usuario(usuario["id"])
-        if datos_actuales and datos_actuales.get("datos_completos"):
-            st.info("Puedes actualizar tu información cuando lo necesites 👇")
+        usuario = st.session_state.usuario
+        nombre_actual = usuario.get("nombre_usuario", "")
+        correo_actual = usuario.get("correo", "")
         
-        with st.form("form_datos_taller"):
-            st.subheader("🏢 Datos del Taller")
-            nombre_taller = st.text_input("Nombre del taller", 
-                                         value=datos_actuales.get("nombre_taller", "") if datos_actuales else "")
-            ubicacion = st.text_input("Ubicación (Dirección completa)",
-                                     value=datos_actuales.get("ubicacion", "") if datos_actuales else "")
+        nuevo_nombre = st.text_input("👤 Nombre de usuario", value=nombre_actual)
+        nuevo_correo = st.text_input("📧 Correo electrónico", value=correo_actual, disabled=True)
+        nueva_contrasena = st.text_input("🔒 Nueva contraseña (dejar vacío para no cambiar)", type="password")
+        
+        st.subheader("🏢 Datos de Recolección")
+        nombre_taller = st.text_input("Nombre del Taller / Negocio")
+        ubicacion = st.text_area("📍 Ubicación completa")
+        litros = st.number_input("🛢️ Litros de aceite a recolectar", min_value=0.0, step=1.0)
+        tambos = st.number_input("📦 Cantidad de tambos", min_value=0, step=1)
+        
+        if st.button("Guardar Cambios"):
+            actualizar = {"nombre_usuario": nuevo_nombre}
+            if nueva_contrasena:
+                actualizar["contrasena"] = nueva_contrasena
             
-            st.subheader("🛢️ Información de Recolección")
-            litros = st.number_input("Cantidad de litros de aceite disponibles", 
-                                    min_value=0.0, step=1.0,
-                                    value=float(datos_actuales.get("litros_aceite", 0)) if datos_actuales else 0.0)
-            tambos = st.number_input("Cantidad de tambos a recolectar", 
-                                    min_value=0, step=1,
-                                    value=int(datos_actuales.get("cantidad_tambos", 0)) if datos_actuales else 0)
-            
-            if st.form_submit_button("💾 Guardar Cambios", use_container_width=True):
-                if nombre_taller and ubicacion:
-                    actualizar_datos_usuario(usuario["id"], nombre_taller, ubicacion, litros, tambos)
-                    st.success("✅ ¡Datos guardados correctamente!")
-                    st.rerun()
-                else:
-                    st.warning("⚠️ Completa nombre del taller y ubicación")
+            ok, msg = actualizar_datos_usuario(correo_actual, actualizar)
+            if ok:
+                st.success(msg)
+                # Actualizar datos en sesión
+                st.session_state.usuario["nombre_usuario"] = nuevo_nombre
+            else:
+                st.error(msg)
 
-# --- 🏢 DATOS DE LA EMPRESA ---
-elif menu == "🏢 Datos de la Empresa":
-    st.markdown("<h2 style='text-align: center;'>🏢 Conoce a Eco-Oil</h2>", unsafe_allow_html=True)
-    st.write("---")
-    
-    col1, col2 = st.columns([1, 2])
-    with col1:
-        st.image("https://images.unsplash.com/photo-153813578502c-d7502c0a49f0?w=250", caption="Eco-Oil 🌿")
-    
-    with col2:
-        st.subheader("♻️ ¿Quiénes somos?")
-        st.write("""
-        *Eco-Oil* es una empresa comprometida con el medio ambiente. Nos dedicamos a la recolección 
-        profesional de aceite vegetal usado para su tratamiento y reciclaje adecuado.
-        
-        Nuestra misión es evitar que el aceite llegue a nuestros ríos y drenajes, protegiendo el agua 
-        y el ecosistema de San Luis Potosí.
-        """)
-    
-    st.write("---")
-    st.subheader("👥 Nuestro Equipo")
-    
-    personal = [
-        {"nombre": "Mario Chalque", "cargo": "Coordinador de Recolección"},
-        {"nombre": "José de Jesús Palencia", "cargo": "Jefe de Operaciones"},
-        {"nombre": "Alicia Sánchez", "cargo": "Atención a Clientes"},
-        {"nombre": "Tania Aguilar", "cargo": "Administración"}
-    ]
-    
-    cols = st.columns(4)
-    for i, miembro in enumerate(personal):
-        with cols[i]:
-            st.markdown(f"""
-            <div style='text-align: center; padding: 10px; background-color: #f0f8f0; border-radius: 10px;'>
-                <h4>{miembro['nombre']}</h4>
-                <p style='color: #555;'>{miembro['cargo']}</p>
-            </div>
-            """, unsafe_allow_html=True)
-    
-    st.write("---")
-    st.info("📍 Estamos en San Luis Potosí, S.L.P. 🇲🇽 | 📧 contacto@eco-oil.mx")
-
-# --- 👥 PANEL DE ADMINISTRACIÓN ---
-elif menu == "👥 Administración":
-    if not st.session_state.usuario or st.session_state.usuario["correo"] not in ADMIN_CORREOS:
-        st.warning("⚠️ Solo administradores")
+# 📦 NUEVA SOLICITUD DE RECOLECCIÓN
+elif menu == "📦 Nueva Solicitud":
+    if not st.session_state.usuario:
+        st.warning("⚠️ Inicia sesión primero")
     else:
-        st.markdown("<h2 style='text-align: center;'>👥 Panel de Administración</h2>", unsafe_allow_html=True)
-        st.write("---")
+        st.title("📦 Solicitar Recolección")
         
-        usuarios = obtener_todos_usuarios()
-        if usuarios:
-            st.subheader("📋 Datos Registrados de Talleres")
+        st.info("Llena los datos para que pasemos a recoger tu aceite")
+        
+        nombre_taller = st.text_input("🏢 Nombre del Taller / Negocio")
+        direccion = st.text_area("📍 Dirección completa")
+        referencia = st.text_area("🗺️ Referencias para llegar")
+        tipo_aceite = st.selectbox("🛢️ Tipo de Aceite", ["Aceite de cocina", "Aceite lubricante", "Otro"])
+        litros = st.number_input("Cantidad aproximada en litros", min_value=1, step=1)
+        tambos = st.number_input("Cantidad de tambos/envases", min_value=1, step=1)
+        fecha = st.date_input("📅 Fecha preferida")
+        horario = st.selectbox("⏰ Horario preferido", ["Mañana (9:00-12:00)", "Tarde (12:00-15:00)", "Por la tarde (15:00-18:00)"])
+        
+        if st.button("✅ Enviar Solicitud"):
+            datos = {
+                "correo_usuario": st.session_state.usuario["correo"],
+                "nombre_usuario": st.session_state.usuario["nombre_usuario"],
+                "nombre_taller": nombre_taller,
+                "direccion": direccion,
+                "referencia": referencia,
+                "tipo_aceite": tipo_aceite,
+                "litros": litros,
+                "tambos": tambos,
+                "fecha": str(fecha),
+                "horario": horario,
+                "estado": "Pendiente"
+            }
             
-            datos_tabla = []
-            for u in usuarios:
-                datos_tabla.append({
-                    "Usuario": u.get("nombre_usuario", ""),
-                    "Correo": u.get("correo", ""),
-                    "Nombre del Taller": u.get("nombre_taller", "---"),
-                    "Ubicación": u.get("ubicacion", "---"),
-                    "Litros Disponibles": u.get("litros_aceite", 0),
-                    "Tambos": u.get("cantidad_tambos", 0)
-                })
-            
-            st.table(datos_tabla)
-            
-            total_litros = sum(u.get("litros_aceite", 0) for u in usuarios)
-            total_tambos = sum(u.get("cantidad_tambos", 0) for u in usuarios)
-            
-            col1, col2 = st.columns(2)
-            col1.metric("🛢️ Total Litros Reportados", f"{total_litros:.2f} L")
-            col2.metric("📦 Total Tambos", total_tambos)
-        else:
-            st.info("📂 Aún no hay usuarios registrados")
+            ok, msg = guardar_solicitud_recoleccion(datos)
+            if ok:
+                st.success(msg)
+            else:
+                st.error(msg)
 
-# --- Cerrar sesión ---
-if st.session_state.usuario:
-    st.sidebar.write("---")
-    if st.sidebar.button("🚪 Cerrar Sesión"):
-        st.session_state.usuario = None
-        st.rerun()
+# 📦 MIS SOLICITUDES
+elif menu == "📦 Mis Solicitudes":
+    if not st.session_state.usuario:
+        st.warning("⚠️ Inicia sesión primero")
+    else:
+        st.title("📦 Mis Solicitudes")
+        
+        try:
+            correo = st.session_state.usuario["correo"]
+            respuesta = supabase.table("historial_recoleccion").select("*").eq("correo_usuario", correo).execute()
+            
+            if respuesta.data:
+                for solicitud in respuesta.data:
+                    st.subheader(f"📅 {solicitud.get('fecha', 'Sin fecha')}")
+                    st.write(f"**Lugar:** {solicitud.get('nombre_taller', '')}")
+                    st.write(f"**Dirección:** {solicitud.get('direccion', '')}")
+                    st.write(f"**Aceite:** {solicitud.get('tipo_aceite', '')} — {solicitud.get('litros', 0)} litros")
+                    st.write(f"**Estado:** {solicitud.get('estado', 'Pendiente')}")
+                    st.divider()
+            else:
+                st.info("📋 No tienes solicitudes registradas aún")
+        except Exception as e:
+            st.error(f"Error al cargar solicitudes: {str(e)}")
+
+# ⚙️ ADMINISTRACIÓN
+elif menu == "⚙️ Administración":
+    correo_usuario = st.session_state.usuario.get("correo", "")
+    if correo_usuario not in ADMIN_CORREOS:
+        st.error("❌ No tienes permiso para acceder a esta página")
+    else:
+        st.title("⚙️ Panel de Administración")
+        st.success(f"👋 Bienvenido Administrador — {correo_usuario}")
+        
+        tab1, tab2 = st.tabs(["📋 Solicitudes de Recolección", "👥 Usuarios Registrados"])
+        
+        with tab1:
+            st.subheader("Solicitudes Pendientes")
+            try:
+                respuesta = supabase.table("historial_recoleccion").select("*").execute()
+                if respuesta.data:
+                    st.table(respuesta.data)
+                else:
+                    st.info("No hay solicitudes registradas")
+            except Exception as e:
+                st.error(f"Error: {str(e)}")
+        
+        with tab2:
+            st.subheader("Lista de Usuarios")
+            try:
+                respuesta = supabase.table("usuarios").select("*").execute()
+                if respuesta.data:
+                    st.table(respuesta.data)
+                else:
+                    st.info("No hay usuarios registrados")
+            except Exception as e:
+                st.error(f"Error: {str(e)}")
+
+# 🚪 CERRAR SESIÓN
+elif menu == "🚪 Cerrar Sesión":
+    st.session_state.usuario = None
+    st.success("✅ Sesión cerrada correctamente")
+    st.rerun()

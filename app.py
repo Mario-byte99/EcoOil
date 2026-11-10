@@ -281,7 +281,7 @@ elif menu == "📦 Mis Solicitudes":
                 for solicitud in respuesta.data:
                     st.subheader(f"📅 {solicitud.get('fecha', 'Sin fecha')}")
                     st.write(f"**Lugar:** {solicitud.get('nombre_taller', '')}")
-                    st.write(f"**Dirección:** {solicitud.get('direccion', '')}")
+                    st.write(f"**Dirección:** {solicitud.get('ubicacion', '')}")
                     st.write(f"**Aceite:** {solicitud.get('tipo_aceite', '')} — {solicitud.get('litros', 0)} litros")
                     st.write(f"**Estado:** {solicitud.get('estado', 'Pendiente')}")
                     st.divider()

@@ -186,7 +186,7 @@ elif menu == "🏢 Datos de la Empresa":
     
     📍 **Ubicación:** San Luis Potosí, S.L.P.
     📞 **Teléfono:** (444) 123-4567
-    📧 **Correo:** contacto@eco-oil.mx
+    📧 **Correo:** cristiancomepolla12@gmail.com
     
     ### 👥 Nuestro Equipo
     - **Mario Chalqueño** — Coordinador de Logística
@@ -195,7 +195,7 @@ elif menu == "🏢 Datos de la Empresa":
     - **Cristian** — Administración
     
     ### 📋 ¿Qué hacemos?
-    Recolectamos aceite de cocina y lubricante usado de forma segura,
+    Recolectamos aceite y lubricante usado de automoviles de forma segura,
     lo procesamos y le damos un destino ecológico.
     """)
 
@@ -237,7 +237,7 @@ elif menu == "📦 Nueva Solicitud":
         st.info("Llena los datos para que pasemos a recoger tu aceite")
         
         nombre_taller = st.text_input("🏢 Nombre del Taller / Negocio")
-        direccion = st.text_area("📍 Dirección completa")
+        ubicacion = st.text_area("📍 Dirección completa")
         referencia = st.text_area("🗺️ Referencias para llegar")
         tipo_aceite = st.selectbox("🛢️ Tipo de Aceite", ["Aceite de cocina", "Aceite lubricante", "Otro"])
         litros = st.number_input("Cantidad aproximada en litros", min_value=1, step=1)
@@ -250,7 +250,7 @@ elif menu == "📦 Nueva Solicitud":
                 "correo_usuario": st.session_state.usuario["correo"],
                 "nombre_usuario": st.session_state.usuario["nombre_usuario"],
                 "nombre_taller": nombre_taller,
-                "direccion": direccion,
+                "ubicacion": ubicacion,
                 "referencia": referencia,
                 "tipo_aceite": tipo_aceite,
                 "litros": litros,
@@ -281,7 +281,7 @@ elif menu == "📦 Mis Solicitudes":
                 for solicitud in respuesta.data:
                     st.subheader(f"📅 {solicitud.get('fecha', 'Sin fecha')}")
                     st.write(f"**Lugar:** {solicitud.get('nombre_taller', '')}")
-                    st.write(f"**Dirección:** {solicitud.get('ubicacion', '')}")
+                    st.write(f"**Ubicacion:** {solicitud.get('ubicacion', '')}")
                     st.write(f"**Aceite:** {solicitud.get('tipo_aceite', '')} — {solicitud.get('litros', 0)} litros")
                     st.write(f"**Estado:** {solicitud.get('estado', 'Pendiente')}")
                     st.divider()

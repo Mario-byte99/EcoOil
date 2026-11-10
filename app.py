@@ -8,9 +8,11 @@ st.set_page_config(
 )
 
 # Código de verificación de Google
-st.markdown("""
-<meta name="google-site-verification" content="<meta name="google-site-verification" content="EF6SeijiuTcSklEjDiCRLOm4K4ljPgdo4Oi03lx9aEU" />
-""", unsafe_allow_html=True)
+st.html("""
+<head>
+<meta name="google-site-verification" content="EF6SeijiuTcSklEjDiCRLOm4K4ljPgdo4Oi03lx9aEU" />
+</head>
+""")
 
 import streamlit as st
 from supabase import create_client, Client

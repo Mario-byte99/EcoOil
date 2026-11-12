@@ -200,18 +200,20 @@ elif menu == "🏢 Datos de la Empresa":
     **Eco-Oil** es una empresa dedicada a la recolección y tratamiento de aceites usados.
     Contribuimos al cuidado del medio ambiente evitando que aceites contaminantes lleguen a nuestros ríos y suelos.
     
-    📍 **Ubicación:** San Luis Potosí, S.L.P.
-    📞 **Teléfono:** (444) 123-4567
-    📧 **Correo:** cristiancomepolla12@gmail.com
+    📍 **Ubicación:** Villa de Pozos, S.L.P.
+    📞 **Teléfono:** (444) 5424 960
+    📧 **Correo:** josedejesuspalenciaramirez2@gmail.com
     
     ### 👥 Nuestro Equipo
-    - **Mario Chalqueño** — Coordinador de Logística
-    - **José de Jesús Palencia** — Jefe de Operaciones
-    - **Aracely Sánchez** — Atención a Clientes
-    - **Cristian** — Administración
+    - **Mario Chalqueño** — Cordinador de Logistica 
+    - **José de Jesús** — Jefe de Operaciones
+    - **Jacqueline** — Directora General
+    - **Cristian** — Recursos Humanos
+    - **Emmanuel** - Atencion a clientes
+    - **Adolfo** - Marketing
     
     ### 📋 ¿Qué hacemos?
-    Recolectamos aceite y lubricante usado de automoviles de forma segura,
+    Recolectamos aceite usado de automoviles de forma segura,
     lo procesamos y le damos un destino ecológico.
     """)
 

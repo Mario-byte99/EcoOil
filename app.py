@@ -209,8 +209,8 @@ elif menu == "🏢 Datos de la Empresa":
     - **José de Jesús** — Jefe de Operaciones
     - **Jacqueline** — Directora General
     - **Cristian** — Recursos Humanos
-    - **Emmanuel** - Atencion a clientes
-    - **Adolfo** - Marketing
+    - **Emmanuel** — Atencion a clientes
+    - **Adolfo** — Marketing
     
     ### 📋 ¿Qué hacemos?
     Recolectamos aceite usado de automoviles de forma segura,
@@ -257,7 +257,6 @@ elif menu == "📦 Nueva Solicitud":
         nombre_taller = st.text_input("🏢 Nombre del Taller / Negocio")
         ubicacion = st.text_area("📍 Dirección completa")
         referencia = st.text_area("🗺️ Referencias para llegar")
-        tipo_aceite = st.selectbox("🛢️ Tipo de Aceite", ["Aceite de cocina", "Aceite lubricante", "Otro"])
         litros = st.number_input("Cantidad aproximada en litros", min_value=1, step=1)
         tambos = st.number_input("Cantidad de tambos/envases", min_value=1, step=1)
         fecha = st.date_input("📅 Fecha preferida")
@@ -270,7 +269,6 @@ elif menu == "📦 Nueva Solicitud":
                 "nombre_taller": nombre_taller,
                 "ubicacion": ubicacion,
                 "referencia": referencia,
-                "tipo_aceite": tipo_aceite,
                 "litros": litros,
                 "tambos": tambos,
                 "fecha": str(fecha),
@@ -300,7 +298,6 @@ elif menu == "📦 Mis Solicitudes":
                     st.subheader(f"📅 {solicitud.get('fecha', 'Sin fecha')}")
                     st.write(f"**Lugar:** {solicitud.get('nombre_taller', '')}")
                     st.write(f"**Ubicacion:** {solicitud.get('ubicacion', '')}")
-                    st.write(f"**Aceite:** {solicitud.get('tipo_aceite', '')} — {solicitud.get('litros', 0)} litros")
                     st.write(f"**Estado:** {solicitud.get('estado', 'Pendiente')}")
                     st.divider()
             else:

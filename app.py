@@ -202,6 +202,7 @@ elif menu == "🏢 Datos de la Empresa":
     
     📍 **Ubicación:** Villa de Pozos, S.L.P.
     📞 **Teléfono:** (444) 5424 960
+    
     📧 **Correo:** josedejesuspalenciaramirez2@gmail.com
     
     ### 👥 Nuestro Equipo

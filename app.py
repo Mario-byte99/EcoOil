@@ -167,7 +167,7 @@ if menu == "🏠 Inicio":
         st.markdown("<h1 style='text-align: center; color: #2E7D32;'>🌱 Eco-Oil</h1>", unsafe_allow_html=True)
     st.title("🌱 Eco-Oil — Recolección de Aceite")
     st.subheader("Cuida el planeta, recicla tu aceite usado")
-    st.info(f"💰 Costo por tambo/envase: **${COSTO_POR_TAMBO:,} MXN**")
+    st.info(f"💰 Costo por Tambo: **${COSTO_POR_TAMBO:,} MXN**")
     st.markdown("""
     ### 🟢 Bienvenido a Eco-Oil
     

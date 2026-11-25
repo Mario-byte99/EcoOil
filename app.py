@@ -368,4 +368,56 @@ elif menu == "⚙️ Administración":
                                 st.rerun()
                         with col3:
                             if st.button("🗑️ Eliminar", key=f"del_{idx}"):
-                                ok, msg = eliminar_ped
+                                ok, msg = eliminar_pedido(pedido_id)
+                                if ok:
+                                    st.success(msg)
+                                    st.rerun()
+                                else:
+                                    st.error(msg)
+                    except Exception as e:
+                        st.error(f"❌ Error al cargar pedidos: {str(e)}")
+            
+            with tab2:
+                st.subheader("✅ Pedidos Completados")
+                try:
+                    respuesta_completados = supabase.table("pedidos_completados").select("*").order("fecha_pedido", desc=True).execute()
+                    if respuesta_completados.data:
+                        for pc in respuesta_completados.data:
+                            st.markdown(f"**Pedido #{pc.get('numero_pedido')}**")
+                            st.write(f"📅 Fecha: {pc.get('fecha_pedido')}")
+                            st.write(f"📦 Tambos: {pc.get('cantidad_tambos')}")
+                            st.write(f"💰 Total: ${pc.get('costo_total'):,}")
+                            st.divider()
+                    else:
+                        st.info("📋 No hay pedidos completados aún")
+                except Exception as e:
+                    st.error(f"❌ Error: {str(e)}")
+            
+            with tab3:
+                st.subheader("👥 Usuarios Registrados")
+                try:
+                    respuesta_usuarios = supabase.table("usuarios").select("*").execute()
+                    if respuesta_usuarios.data:
+                        for usr in respuesta_usuarios.data:
+                            st.markdown(f"**{usr.get('nombre_usuario')}**")
+                            st.write(f"📧 {usr.get('correo')}")
+                            correo_usr = usr.get("correo")
+                            if correo_usr not in ADMIN_CORREOS:
+                                if st.button(f"🗑️ Eliminar usuario", key=f"delusr_{correo_usr}"):
+                                    ok_del, msg_del = eliminar_usuario(correo_usr)
+                                    if ok_del:
+                                        st.success(msg_del)
+                                        st.rerun()
+                                    else:
+                                        st.error(msg_del)
+                            st.divider()
+                    else:
+                        st.info("📋 No hay usuarios registrados aún")
+                except Exception as e:
+                    st.error(f"❌ Error: {str(e)}")
+
+# 🚪 Cerrar Sesión
+elif menu == "🚪 Cerrar Sesión":
+    st.session_state.usuario = None
+    st.success("✅ Sesión cerrada correctamente")
+    st.rerun()

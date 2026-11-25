@@ -374,7 +374,7 @@ elif menu == "⚙️ Administración":
                                     st.rerun()
                                 else:
                                     st.error(msg)
-                    except Exception as e:
+            except Exception as e:
                         st.error(f"❌ Error al cargar pedidos: {str(e)}")
             
             with tab2:

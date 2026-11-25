@@ -1,9 +1,13 @@
 import streamlit as st
+from supabase import create_client, Client
 
-# Meta etiqueta para Google Search Console
+# --------------------------
+# 🖼️ CONFIGURACIÓN DE LA PÁGINA
+# --------------------------
 st.set_page_config(
     page_title="Eco-Oil — Recolección de Aceite",
     page_icon="🌱",
+    layout="centered",
     menu_items=None
 )
 
@@ -13,9 +17,6 @@ st.html("""
 <meta name="google-site-verification" content="EF6SeijiuTcSklEjDiCRLOm4K4ljPgdo4Oi03lx9aEU" /> 
 </head>
 """)
-
-import streamlit as st
-from supabase import create_client, Client
 
 # --------------------------
 # 🔑 CONFIGURACIÓN DE SUPABASE
@@ -34,6 +35,8 @@ ADMIN_CORREOS = {
     "asc720613@gmail.com": "1234",
     "tatisaguilarmtz@gmail.com": "4567"
 }
+
+COSTO_POR_TAMBO = 1000  # 💲 Precio por cada tambo
 
 # --------------------------
 # ✅ INICIALIZAR VARIABLES DE SESIÓN
@@ -92,10 +95,46 @@ def actualizar_datos_usuario(correo_actual, nuevos_datos):
 
 def guardar_solicitud_recoleccion(datos):
     try:
+        datos["costo_total"] = datos.get("tambos", 0) * COSTO_POR_TAMBO
         supabase.table("historial_recoleccion").insert(datos).execute()
         return True, "✅ Solicitud enviada correctamente"
     except Exception as e:
         return False, f"❌ Error al guardar: {str(e)}"
+
+
+def eliminar_pedido(id_pedido):
+    try:
+        supabase.table("historial_recoleccion").delete().eq("id", id_pedido).execute()
+        return True, "✅ Pedido eliminado correctamente"
+    except Exception as e:
+        return False, f"❌ Error: {str(e)}"
+
+
+def cambiar_estado_pedido(id_pedido, nuevo_estado):
+    try:
+        supabase.table("historial_recoleccion").update({"estado": nuevo_estado}).eq("id", id_pedido).execute()
+        
+        if nuevo_estado == "Completado":
+            pedido = supabase.table("historial_recoleccion").select("*").eq("id", id_pedido).execute().data[0]
+            datos_completado = {
+                "numero_pedido": id_pedido,
+                "fecha_pedido": pedido.get("fecha"),
+                "cantidad_tambos": pedido.get("tambos"),
+                "costo_total": pedido.get("tambos", 0) * COSTO_POR_TAMBO
+            }
+            supabase.table("pedidos_completados").insert(datos_completado).execute()
+        
+        return True, f"✅ Estado cambiado a: {nuevo_estado}"
+    except Exception as e:
+        return False, f"❌ Error: {str(e)}"
+
+
+def eliminar_usuario(correo_usuario):
+    try:
+        supabase.table("usuarios").delete().eq("correo", correo_usuario).execute()
+        return True, "✅ Usuario eliminado correctamente"
+    except Exception as e:
+        return False, f"❌ Error: {str(e)}"
 
 # --------------------------
 # 📱 BARRA LATERAL Y MENÚ
@@ -114,7 +153,7 @@ if st.session_state.usuario:
             "🏠 Inicio",
             "🏢 Datos de la Empresa",
             "✏️ Mis Datos",
-            "📦 Mis Solicitudes",
+            "📦 Mis Pedidos",
             "📦 Nueva Solicitud",
             "🚪 Cerrar Sesión"
         ])
@@ -132,6 +171,7 @@ else:
 
 # 🏠 INICIO
 if menu == "🏠 Inicio":
+    st.image("eco-oil-logo.png", use_container_width=True)  # Coloca tu imagen con este nombre
     st.title("🌱 Eco-Oil — Recolección de Aceite")
     st.subheader("Cuida el planeta, recicla tu aceite usado")
     
@@ -143,7 +183,9 @@ if menu == "🏠 Inicio":
     
     ✅ Contamina menos
     ✅ Cuida el agua y el suelo
-    ✅ Recibe un servicio gratuito
+    ✅ Recibe un servicio a un costo justo
+    
+    💰 **Costo por tambo/envase:** $1,000.00 MXN
     
     > 🔑 Inicia sesión o regístrate para solicitar tu recolección
     """)
@@ -176,6 +218,8 @@ elif menu == "📝 Registrarse":
     contrasena = st.text_input("🔒 Contraseña", type="password")
     confirmar = st.text_input("🔒 Confirmar contraseña", type="password")
     
+    st.info(f"💲 Precio por cada tambo a recolectar: **${COSTO_POR_TAMBO:,} MXN**")
+    
     if st.button("Registrarse"):
         if nombre and correo and contrasena and confirmar:
             if contrasena != confirmar:
@@ -202,19 +246,18 @@ elif menu == "🏢 Datos de la Empresa":
     
     📍 **Ubicación:** Villa de Pozos, S.L.P.
     📞 **Teléfono:** (444) 5424 960
-    
     📧 **Correo:** josedejesuspalenciaramirez2@gmail.com
     
     ### 👥 Nuestro Equipo
-    - **Mario Chalqueño** — Cordinador de Logistica 
+    - **Mario Chalqueño** — Coordinador de Logística
     - **José de Jesús** — Jefe de Operaciones
     - **Jacqueline** — Directora General
     - **Cristian** — Recursos Humanos
-    - **Emmanuel** — Atencion a clientes
+    - **Emmanuel** — Atención a Clientes
     - **Adolfo** — Marketing
     
     ### 📋 ¿Qué hacemos?
-    Recolectamos aceite usado de automoviles de forma segura,
+    Recolectamos aceite usado de automóviles de forma segura,
     lo procesamos y le damos un destino ecológico.
     """)
 
@@ -241,7 +284,6 @@ elif menu == "✏️ Mis Datos":
             ok, msg = actualizar_datos_usuario(correo_actual, actualizar)
             if ok:
                 st.success(msg)
-                # Actualizar datos en sesión
                 st.session_state.usuario["nombre_usuario"] = nuevo_nombre
             else:
                 st.error(msg)
@@ -253,7 +295,7 @@ elif menu == "📦 Nueva Solicitud":
     else:
         st.title("📦 Solicitar Recolección")
         
-        st.info("Llena los datos para que pasemos a recoger tu aceite")
+        st.info(f"💲 Precio por tambo: **${COSTO_POR_TAMBO:,} MXN** — El total se calculará automáticamente")
         
         nombre_taller = st.text_input("🏢 Nombre del Taller / Negocio")
         ubicacion = st.text_area("📍 Dirección completa")
@@ -261,6 +303,9 @@ elif menu == "📦 Nueva Solicitud":
         tambos = st.number_input("Cantidad de tambos/envases", min_value=1, step=1)
         fecha = st.date_input("📅 Fecha preferida")
         horario = st.selectbox("⏰ Horario preferido", ["Mañana (9:00-12:00)", "Tarde (12:00-15:00)", "Por la tarde (15:00-18:00)"])
+        
+        if tambos:
+            st.subheader(f"💰 Total a pagar: **${tambos * COSTO_POR_TAMBO:,} MXN**")
         
         if st.button("✅ Enviar Solicitud"):
             datos = {
@@ -281,28 +326,33 @@ elif menu == "📦 Nueva Solicitud":
             else:
                 st.error(msg)
 
-# 📦 MIS SOLICITUDES
-elif menu == "📦 Mis Solicitudes":
+# 📦 MIS PEDIDOS (solo lo que el usuario necesita ver)
+elif menu == "📦 Mis Pedidos":
     if not st.session_state.usuario:
         st.warning("⚠️ Inicia sesión primero")
     else:
-        st.title("📦 Mis Solicitudes")
+        st.title("📦 Mis Pedidos")
         
         try:
             correo = st.session_state.usuario["correo"]
-            respuesta = supabase.table("historial_recoleccion").select("*").eq("correo_usuario", correo).execute()
+            respuesta = supabase.table("historial_recoleccion").select("*").eq("correo_usuario", correo).order("fecha", desc=True).execute()
             
             if respuesta.data:
                 for solicitud in respuesta.data:
                     st.subheader(f"📅 {solicitud.get('fecha', 'Sin fecha')}")
-                    st.write(f"**Lugar:** {solicitud.get('nombre_taller', '')}")
-                    st.write(f"**Ubicacion:** {solicitud.get('ubicacion', '')}")
-                    st.write(f"**Estado:** {solicitud.get('estado', 'Pendiente')}")
+                    st.write(f"**Cantidad de tambos:** {solicitud.get('tambos', 0)}")
+                    estado = solicitud.get('estado', 'Pendiente')
+                    if estado == "Pendiente":
+                        st.info(f"⏳ **{estado}**")
+                    elif estado == "En proceso":
+                        st.warning(f"🔄 **{estado}**")
+                    elif estado == "Completado":
+                        st.success(f"✅ **{estado}**")
                     st.divider()
             else:
-                st.info("📋 No tienes solicitudes registradas aún")
+                st.info("📋 No tienes pedidos registrados aún")
         except Exception as e:
-            st.error(f"Error al cargar solicitudes: {str(e)}")
+            st.error(f"Error al cargar pedidos: {str(e)}")
 
 # ⚙️ ADMINISTRACIÓN
 elif menu == "⚙️ Administración":
@@ -311,34 +361,35 @@ elif menu == "⚙️ Administración":
         st.error("❌ No tienes permiso para acceder a esta página")
     else:
         st.title("⚙️ Panel de Administración")
-        st.success(f"👋 Bienvenido Administrador — {st.session_state.usuario.get('nombre_usuario','Administradoor')}")
+        st.success(f"👋 Bienvenido Administrador — {st.session_state.usuario.get('nombre_usuario','Administrador')}")
         
-        tab1, tab2 = st.tabs(["📋 Solicitudes de Recolección", "👥 Usuarios Registrados"])
+        tab1, tab2, tab3 = st.tabs(["📋 Pedidos de Recolección", "✅ Pedidos Completados", "👥 Usuarios Registrados"])
         
         with tab1:
-            st.subheader("Solicitudes Pendientes")
+            st.subheader("Pedidos de Recolección")
             try:
-                respuesta = supabase.table("historial_recoleccion").select("*").execute()
+                respuesta = supabase.table("historial_recoleccion").select("*").order("fecha", desc=True).execute()
                 if respuesta.data:
-                    st.table(respuesta.data)
-                else:
-                    st.info("No hay solicitudes registradas")
-            except Exception as e:
-                st.error(f"Error: {str(e)}")
-        
-        with tab2:
-            st.subheader("Lista de Usuarios")
-            try:
-                respuesta = supabase.table("usuarios").select("*").execute()
-                if respuesta.data:
-                    st.table(respuesta.data)
-                else:
-                    st.info("No hay usuarios registrados")
-            except Exception as e:
-                st.error(f"Error: {str(e)}")
-
-# 🚪 CERRAR SESIÓN
-elif menu == "🚪 Cerrar Sesión":
-    st.session_state.usuario = None
-    st.success("✅ Sesión cerrada correctamente")
-    st.rerun()
+                    for idx, pedido in enumerate(respuesta.data):
+                        pedido_id = pedido.get("id")
+                        st.markdown(f"**Pedido #{pedido_id}** — 📅 {pedido.get('fecha', 'Sin fecha')}")
+                        st.write(f"👤 Usuario: {pedido.get('nombre_usuario', '')}")
+                        st.write(f"🏢 Taller: {pedido.get('nombre_taller', '')}")
+                        st.write(f"📍 Ubicación: {pedido.get('ubicacion', '')}")
+                        st.write(f"📦 Tambos: {pedido.get('tambos', 0)} — 💰 Total: ${pedido.get('tambos', 0) * COSTO_POR_TAMBO:,}")
+                        
+                        estado_actual = pedido.get('estado', 'Pendiente')
+                        st.info(f"Estado actual: **{estado_actual}**")
+                        
+                        col1, col2, col3 = st.columns(3)
+                        with col1:
+                            if st.button(f"🔄 En proceso", key=f"proceso_{idx}") and estado_actual != "En proceso":
+                                ok, msg = cambiar_estado_pedido(pedido_id, "En proceso")
+                                st.success(msg)
+                                st.rerun()
+                        with col2:
+                            if st.button(f"✅ Completar", key=f"completar_{idx}") and estado_actual != "Completado":
+                                ok, msg = cambiar_estado_pedido(pedido_id, "Completado")
+                                st.success(msg)
+                                st.rerun()
+                        with col3:

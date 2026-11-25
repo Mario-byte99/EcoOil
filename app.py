@@ -48,14 +48,13 @@ if "pagina_actual" not in st.session_state:
     st.session_state.pagina_actual = "inicio"
 
 # --------------------------
-# 🔐 FUNCIONES DE AUTENTICACIÓN
+# 🔐 FUNCIONES
 # --------------------------
 def registrar_usuario(correo, contrasena, nombre_usuario=""):
     try:
         respuesta = supabase.table("usuarios").select("*").eq("correo", correo).execute()
         if respuesta.data:
             return False, "⚠️ Este correo ya está registrado"
-        
         datos = {
             "correo": correo,
             "contrasena": contrasena,
@@ -70,17 +69,13 @@ def registrar_usuario(correo, contrasena, nombre_usuario=""):
 def iniciar_sesion_usuario(correo, contrasena):
     try:
         respuesta = supabase.table("usuarios").select("*").eq("correo", correo).execute()
-        
         if not respuesta.data:
             return None, "❌ Correo no encontrado"
-        
         usuario = respuesta.data[0]
-        
         if usuario.get("contrasena") == contrasena:
             return usuario, f"✅ Bienvenido, {usuario['nombre_usuario']}!"
         else:
             return None, "❌ Contraseña incorrecta"
-            
     except Exception as e:
         return None, f"❌ Error: {str(e)}"
 
@@ -113,7 +108,6 @@ def eliminar_pedido(id_pedido):
 def cambiar_estado_pedido(id_pedido, nuevo_estado):
     try:
         supabase.table("historial_recoleccion").update({"estado": nuevo_estado}).eq("id", id_pedido).execute()
-        
         if nuevo_estado == "Completado":
             pedido = supabase.table("historial_recoleccion").select("*").eq("id", id_pedido).execute().data[0]
             datos_completado = {
@@ -123,7 +117,6 @@ def cambiar_estado_pedido(id_pedido, nuevo_estado):
                 "costo_total": pedido.get("tambos", 0) * COSTO_POR_TAMBO
             }
             supabase.table("pedidos_completados").insert(datos_completado).execute()
-        
         return True, f"✅ Estado cambiado a: {nuevo_estado}"
     except Exception as e:
         return False, f"❌ Error: {str(e)}"
@@ -166,16 +159,18 @@ else:
     ])
 
 # --------------------------
-# 📄 PÁGINAS DE LA APLICACIÓN
+# 📄 PÁGINAS
 # --------------------------
 
 # 🏠 INICIO
 if menu == "🏠 Inicio":
-    st.image("eco-oil-logo.png", use_container_width=True)  # Coloca tu imagen con este nombre
+    try:
+        st.image("eco-oil-logo.png", use_container_width=True)
+    except:
+        st.image("https://i.imgur.com/placeholder.png", use_container_width=True, caption="Eco-Oil")
     st.title("🌱 Eco-Oil — Recolección de Aceite")
     st.subheader("Cuida el planeta, recicla tu aceite usado")
-    
-    st.markdown("""
+    st.markdown(f"""
     ### 🟢 Bienvenido a Eco-Oil
     
     Somos una empresa comprometida con el medio ambiente. 
@@ -185,7 +180,7 @@ if menu == "🏠 Inicio":
     ✅ Cuida el agua y el suelo
     ✅ Recibe un servicio a un costo justo
     
-    💰 **Costo por tambo/envase:** $1,000.00 MXN
+    💰 **Costo por tambo/envase:** ${COSTO_POR_TAMBO:,} MXN
     
     > 🔑 Inicia sesión o regístrate para solicitar tu recolección
     """)
@@ -193,10 +188,8 @@ if menu == "🏠 Inicio":
 # 🔑 INICIAR SESIÓN
 elif menu == "🔑 Iniciar Sesión":
     st.title("🔑 Iniciar Sesión")
-    
     correo = st.text_input("📧 Correo electrónico")
     contrasena = st.text_input("🔒 Contraseña", type="password")
-    
     if st.button("Ingresar"):
         if correo and contrasena:
             usuario, mensaje = iniciar_sesion_usuario(correo, contrasena)
@@ -212,14 +205,11 @@ elif menu == "🔑 Iniciar Sesión":
 # 📝 REGISTRARSE
 elif menu == "📝 Registrarse":
     st.title("📝 Crear Cuenta")
-    
     nombre = st.text_input("👤 Nombre completo")
     correo = st.text_input("📧 Correo electrónico")
     contrasena = st.text_input("🔒 Contraseña", type="password")
     confirmar = st.text_input("🔒 Confirmar contraseña", type="password")
-    
     st.info(f"💲 Precio por cada tambo a recolectar: **${COSTO_POR_TAMBO:,} MXN**")
-    
     if st.button("Registrarse"):
         if nombre and correo and contrasena and confirmar:
             if contrasena != confirmar:
@@ -237,7 +227,6 @@ elif menu == "📝 Registrarse":
 # 🏢 DATOS DE LA EMPRESA
 elif menu == "🏢 Datos de la Empresa":
     st.title("🏢 Eco-Oil — Recolección de Aceite")
-    
     st.markdown("""
     ### 🌍 Quiénes Somos
     
@@ -267,20 +256,16 @@ elif menu == "✏️ Mis Datos":
         st.warning("⚠️ Inicia sesión primero")
     else:
         st.title("✏️ Mis Datos")
-        
         usuario = st.session_state.usuario
         nombre_actual = usuario.get("nombre_usuario", "")
         correo_actual = usuario.get("correo", "")
-        
         nuevo_nombre = st.text_input("👤 Nombre de usuario", value=nombre_actual)
         nuevo_correo = st.text_input("📧 Correo electrónico", value=correo_actual, disabled=True)
         nueva_contrasena = st.text_input("🔒 Nueva contraseña (dejar vacío para no cambiar)", type="password")
-        
         if st.button("Guardar Cambios"):
             actualizar = {"nombre_usuario": nuevo_nombre}
             if nueva_contrasena:
                 actualizar["contrasena"] = nueva_contrasena
-            
             ok, msg = actualizar_datos_usuario(correo_actual, actualizar)
             if ok:
                 st.success(msg)
@@ -288,25 +273,21 @@ elif menu == "✏️ Mis Datos":
             else:
                 st.error(msg)
 
-# 📦 NUEVA SOLICITUD DE RECOLECCIÓN
+# 📦 NUEVA SOLICITUD
 elif menu == "📦 Nueva Solicitud":
     if not st.session_state.usuario:
         st.warning("⚠️ Inicia sesión primero")
     else:
         st.title("📦 Solicitar Recolección")
-        
         st.info(f"💲 Precio por tambo: **${COSTO_POR_TAMBO:,} MXN** — El total se calculará automáticamente")
-        
         nombre_taller = st.text_input("🏢 Nombre del Taller / Negocio")
         ubicacion = st.text_area("📍 Dirección completa")
         referencia = st.text_area("🗺️ Referencias para llegar")
         tambos = st.number_input("Cantidad de tambos/envases", min_value=1, step=1)
         fecha = st.date_input("📅 Fecha preferida")
         horario = st.selectbox("⏰ Horario preferido", ["Mañana (9:00-12:00)", "Tarde (12:00-15:00)", "Por la tarde (15:00-18:00)"])
-        
         if tambos:
             st.subheader(f"💰 Total a pagar: **${tambos * COSTO_POR_TAMBO:,} MXN**")
-        
         if st.button("✅ Enviar Solicitud"):
             datos = {
                 "correo_usuario": st.session_state.usuario["correo"],
@@ -319,24 +300,21 @@ elif menu == "📦 Nueva Solicitud":
                 "horario": horario,
                 "estado": "Pendiente"
             }
-            
             ok, msg = guardar_solicitud_recoleccion(datos)
             if ok:
                 st.success(msg)
             else:
                 st.error(msg)
 
-# 📦 MIS PEDIDOS (solo lo que el usuario necesita ver)
+# 📦 MIS PEDIDOS
 elif menu == "📦 Mis Pedidos":
     if not st.session_state.usuario:
         st.warning("⚠️ Inicia sesión primero")
     else:
         st.title("📦 Mis Pedidos")
-        
         try:
             correo = st.session_state.usuario["correo"]
             respuesta = supabase.table("historial_recoleccion").select("*").eq("correo_usuario", correo).order("fecha", desc=True).execute()
-            
             if respuesta.data:
                 for solicitud in respuesta.data:
                     st.subheader(f"📅 {solicitud.get('fecha', 'Sin fecha')}")
@@ -393,3 +371,4 @@ elif menu == "⚙️ Administración":
                                 st.success(msg)
                                 st.rerun()
                         with col3:
+                            if st.button(f"🗑

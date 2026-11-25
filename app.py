@@ -279,7 +279,7 @@ elif menu == "📦 Nueva Solicitud":
         nombre_taller = st.text_input("🏢 Nombre del Taller / Negocio")
         ubicacion = st.text_area("📍 Dirección completa")
         referencia = st.text_area("🗺️ Referencias para llegar")
-        tambos = st.number_input("Cantidad de tambos/envases", min_value=1, step=1)
+        tambos = st.number_input("Cantidad de tambos", min_value=1, step=1)
         fecha = st.date_input("📅 Fecha preferida")
         horario = st.selectbox("⏰ Horario preferido", ["Mañana (9:00-12:00)", "Tarde (12:00-15:00)", "Por la tarde (15:00-18:00)"])
         if tambos:

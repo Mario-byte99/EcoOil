@@ -104,16 +104,22 @@ def eliminar_pedido(id_pedido):
 
 def cambiar_estado_pedido(id_pedido, nuevo_estado):
     try:
+        # Primero cambiamos el estado
         supabase.table("historial_recoleccion").update({"estado": nuevo_estado}).eq("id", id_pedido).execute()
+        
+        # Si es completado, lo copiamos a la tabla de completados
         if nuevo_estado == "Completado":
-            pedido = supabase.table("historial_recoleccion").select("*").eq("id", id_pedido).execute().data[0]
-            datos_completado = {
-                "numero_pedido": id_pedido,
-                "fecha_pedido": pedido.get("fecha"),
-                "cantidad_tambos": pedido.get("tambos"),
-                "costo_total": pedido.get("tambos", 0) * COSTO_POR_TAMBO
-            }
-            supabase.table("pedidos_completados").insert(datos_completado).execute()
+            # Buscar el pedido con su ID
+            respuesta = supabase.table("historial_recoleccion").select("*").eq("id", id_pedido).execute()
+            if respuesta.data and len(respuesta.data) > 0:
+                pedido = respuesta.data[0]
+                datos_completado = {
+                    "numero_pedido": id_pedido,
+                    "fecha_pedido": pedido.get("fecha"),
+                    "cantidad_tambos": pedido.get("tambos"),
+                    "costo_total": pedido.get("costo_total")
+                }
+                supabase.table("pedidos_completados").insert(datos_completado).execute()
         return True, f"✅ Estado cambiado a: {nuevo_estado}"
     except Exception as e:
         return False, f"❌ Error: {str(e)}"
@@ -352,7 +358,7 @@ elif menu == "⚙️ Administración":
                         st.write(f"📍 Ubicación: {pedido.get('ubicacion', '')}")
                         st.write(f"📦 Tambos: {pedido.get('tambos', 0)} — 💰 Total: ${pedido.get('tambos', 0) * COSTO_POR_TAMBO:,}")
                         
-                        estado_actual = pedido.get('estado', 'Pendiente')
+                        estado_actual = pedido.get('estado', 'Pendiente') 
                         st.info(f"Estado actual: **{estado_actual}**")
                         
                         col1, col2, col3 = st.columns(3)

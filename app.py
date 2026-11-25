@@ -36,16 +36,13 @@ ADMIN_CORREOS = {
     "tatisaguilarmtz@gmail.com": "4567"
 }
 
-COSTO_POR_TAMBO = 1000  # 💲 Precio por cada tambo
+COSTO_POR_TAMBO = 1000
 
 # --------------------------
 # ✅ INICIALIZAR VARIABLES DE SESIÓN
 # --------------------------
 if "usuario" not in st.session_state:
     st.session_state.usuario = None
-
-if "pagina_actual" not in st.session_state:
-    st.session_state.pagina_actual = "inicio"
 
 # --------------------------
 # 🔐 FUNCIONES
@@ -167,10 +164,11 @@ if menu == "🏠 Inicio":
     try:
         st.image("eco-oil-logo.png", use_container_width=True)
     except:
-        st.image("https://i.imgur.com/placeholder.png", use_container_width=True, caption="Eco-Oil")
+        st.markdown("<h1 style='text-align: center; color: #2E7D32;'>🌱 Eco-Oil</h1>", unsafe_allow_html=True)
     st.title("🌱 Eco-Oil — Recolección de Aceite")
     st.subheader("Cuida el planeta, recicla tu aceite usado")
-    st.markdown(f"""
+    st.info(f"💰 Costo por tambo/envase: **${COSTO_POR_TAMBO:,} MXN**")
+    st.markdown("""
     ### 🟢 Bienvenido a Eco-Oil
     
     Somos una empresa comprometida con el medio ambiente. 
@@ -179,8 +177,6 @@ if menu == "🏠 Inicio":
     ✅ Contamina menos
     ✅ Cuida el agua y el suelo
     ✅ Recibe un servicio a un costo justo
-    
-    💰 **Costo por tambo/envase:** ${COSTO_POR_TAMBO:,} MXN
     
     > 🔑 Inicia sesión o regístrate para solicitar tu recolección
     """)
@@ -209,7 +205,7 @@ elif menu == "📝 Registrarse":
     correo = st.text_input("📧 Correo electrónico")
     contrasena = st.text_input("🔒 Contraseña", type="password")
     confirmar = st.text_input("🔒 Confirmar contraseña", type="password")
-    st.info(f"💲 Precio por cada tambo a recolectar: **${COSTO_POR_TAMBO:,} MXN**")
+    st.info(f"💲 Precio por cada tambo: **${COSTO_POR_TAMBO:,} MXN**")
     if st.button("Registrarse"):
         if nombre and correo and contrasena and confirmar:
             if contrasena != confirmar:
@@ -361,14 +357,15 @@ elif menu == "⚙️ Administración":
                         
                         col1, col2, col3 = st.columns(3)
                         with col1:
-                            if st.button(f"🔄 En proceso", key=f"proceso_{idx}") and estado_actual != "En proceso":
+                            if st.button("🔄 En proceso", key=f"proc_{idx}") and estado_actual != "En proceso":
                                 ok, msg = cambiar_estado_pedido(pedido_id, "En proceso")
                                 st.success(msg)
                                 st.rerun()
                         with col2:
-                            if st.button(f"✅ Completar", key=f"completar_{idx}") and estado_actual != "Completado":
+                            if st.button("✅ Completar", key=f"comp_{idx}") and estado_actual != "Completado":
                                 ok, msg = cambiar_estado_pedido(pedido_id, "Completado")
                                 st.success(msg)
                                 st.rerun()
                         with col3:
-                            if st.button(f"🗑
+                            if st.button("🗑️ Eliminar", key=f"del_{idx}"):
+                                ok, msg = eliminar_ped
